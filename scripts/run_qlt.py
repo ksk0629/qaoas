@@ -63,7 +63,6 @@ if __name__ == "__main__":
             for index in indices:
                 observable *= cirq.Z(qubits[index])
             observables += observable
-        ising_tuple = tuple(ising_list)
         sim = cirq.Simulator()
         cost = sim.simulate_expectation_values(
             program=circuit, observables=observables
@@ -103,6 +102,8 @@ if __name__ == "__main__":
     num_params = len(result.x)
     betas = tuple(result.x[: num_params // 2])
     gammas = tuple(result.x[num_params // 2 :])
+    print(betas)
+    print(gammas)
     qaoa = QAOA(ising=ising_tuple, betas=betas, gammas=gammas, p=p)
     cbloq = qaoa.as_composite_bloq()
     in_quregs = get_named_qubits(cbloq.signature.lefts())
