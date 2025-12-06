@@ -4,9 +4,9 @@ import numpy as np
 
 import qualtran as qlt
 
-from all_hadamards import AllHadamards
-from x_mixer import XMixer
-from cost_evolution import CostEvolution
+from .all_hadamards import AllHadamards
+from .x_mixer import XMixer
+from .cost_evolution import CostEvolution
 
 
 @attrs.frozen
