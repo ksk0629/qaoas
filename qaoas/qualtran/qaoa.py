@@ -3,8 +3,8 @@ import attrs
 import numpy as np
 
 import qualtran as qlt
-from qualtran.bloqs.basic_gates import Hadamard
 
+from all_hadamards import AllHadamards
 from x_mixer import XMixer
 from cost_evolution import CostEvolution
 
@@ -12,8 +12,8 @@ from cost_evolution import CostEvolution
 @attrs.frozen
 class QAOA(qlt.Bloq):
     ising: tuple[tuple[tuple[int, ...], float], ...]
-    beta: float
-    gamma: float
+    betas: tuple[float, ...]
+    gammas: tuple[float, ...]
     p: int
 
     @property
@@ -36,12 +36,11 @@ class QAOA(qlt.Bloq):
     def build_composite_bloq(
         self, bb: qlt.BloqBuilder, *, q: qlt.Register
     ) -> dict[str, qlt.Register]:
-        for index in range(self.num_qubits):
-            q[index] = bb.add(Hadamard(), q=q[index])
+        q = bb.add(AllHadamards(num_qubits=self.num_qubits), q=q)
 
-        for _ in range(self.p):
-            q = bb.add(XMixer(num_qubits=self.num_qubits, beta=self.beta), q=q)
-            q = bb.add(CostEvolution(ising=self.ising, gamma=self.gamma), q=q)
+        for index in range(self.p):
+            q = bb.add(XMixer(num_qubits=self.num_qubits, beta=self.betas[index]), q=q)
+            q = bb.add(CostEvolution(ising=self.ising, gamma=self.gammas[index]), q=q)
 
         return {"q": q}
 
@@ -53,10 +52,10 @@ if __name__ == "__main__":
 
     ising = (((0, 1), 0.4), ((0, 1, 2), 0.2), ((1,), 0.4))
     num_qubits = 3
-    beta = np.pi / 2
-    gamma = np.pi / 4
     p = 2
-    qaoa = QAOA(ising=ising, beta=beta, gamma=gamma, p=p)
+    betas = tuple([np.pi / 2 + 1 / index for index in range(1, p + 1)])
+    gammas = tuple([np.pi / 4 + 1 / index for index in range(1, p + 1)])
+    qaoa = QAOA(ising=ising, betas=betas, gammas=gammas, p=p)
 
     cbloq = qaoa.as_composite_bloq()
     in_quregs = get_named_qubits(cbloq.signature.lefts())
@@ -72,7 +71,11 @@ if __name__ == "__main__":
     )
     print(circuit)
     sim = cirq.Simulator()
-    result = sim.run(circuit, repetitions=500)
+    result = sim.run(circuit, repetitions=1000)
 
     bits = result.measurements["q"]
     print(np.unique(bits, axis=0))
+
+    keys = [cirq.big_endian_bits_to_int(row) for row in bits]
+    hist = {k: keys.count(k) for k in set(keys)}
+    print(hist)
