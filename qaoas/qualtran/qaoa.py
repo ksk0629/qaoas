@@ -51,15 +51,14 @@ if __name__ == "__main__":
     from qualtran._infra.gate_with_registers import get_named_qubits
 
     ising = (((0, 1), 0.4), ((0, 1, 2), 0.2), ((1,), 0.4))
-    num_qubits = 3
-    p = 2
+    num_qubits = 1
+    p = 1
     betas = tuple([np.pi / 2 + 1 / index for index in range(1, p + 1)])
     gammas = tuple([np.pi / 4 + 1 / index for index in range(1, p + 1)])
     qaoa = QAOA(ising=ising, betas=betas, gammas=gammas, p=p)
 
     cbloq = qaoa.as_composite_bloq()
     in_quregs = get_named_qubits(cbloq.signature.lefts())
-    print(in_quregs)
     qaoa_circuit, quregs = cbloq.to_cirq_circuit_and_quregs(**in_quregs)
     print(cirq.final_state_vector(qaoa_circuit))
 
@@ -79,3 +78,9 @@ if __name__ == "__main__":
     keys = [cirq.big_endian_bits_to_int(row) for row in bits]
     hist = {k: keys.count(k) for k in set(keys)}
     print(hist)
+
+    qaoa_t = qaoa.t_complexity()
+    print("T-Gates: ", qaoa_t.t)
+    print("Rotations: ", qaoa_t.rotations)
+    print("Cliffords: ", qaoa_t.clifford)
+    print("T-count (including rotations): ", qaoa_t.t_incl_rotations(eps=1e-11))
