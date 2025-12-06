@@ -81,8 +81,10 @@ if __name__ == "__main__":
         estimate_cost,
         initial_params,
         method="COBYLA",
-        options={"maxiter": 2000, "tol": 1e-2},
+        options={"maxiter": 2000},
     )
+
+    print(result)
 
     import matplotlib.pyplot as plt
 
