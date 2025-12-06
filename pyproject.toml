@@ -3,9 +3,9 @@ requires = ["setuptools >= 64", "setuptools_scm >= 8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "template-py-package"
+name = "qaoas"
 dynamic = ["version"]
-description = "A small example package"
+description = "QAOA imementations"
 requires-python = ">=3.13"
 license = { text = "MIT" }
 readme = "README.md"
@@ -15,13 +15,13 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/ksk0629/template_py_package"
+Repository = "https://github.com/ksk0629/qaoas"
 
 [tool.setuptools]
-packages = ["src"]
+packages = ["qaoas"]
 
 [tool.setuptools_scm]
-version_file = "src/_version.py"
+version_file = "qaoas/_version.py"
 local_scheme = "no-local-version"
 
 [dependency-groups]
@@ -46,11 +46,8 @@ warn_return_any = true
 check_untyped_defs = true
 
 [tool.pytest.ini_options]
-markers = [
-    "add_number: marks tests for add_number function",
-    "example_class: marks tests for ExmapleClass Class"
-]
-pythonpath = "./src"
+markers = []
+pythonpath = "./qaoas"
 testpaths = ["tests",]
 
 [tool.coverage.report]
