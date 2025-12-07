@@ -3,10 +3,11 @@ import jijmodeling as jm
 from qamomile.core.higher_ising_model import HigherIsingModel
 import numpy as np
 from scipy.optimize import minimize
+from ommx_pyscipopt_adapter import OMMXPySCIPOptAdapter
 
 from qualtran._infra.gate_with_registers import get_named_qubits
 
-from qaoas.qualtran.qaoa import QAOA
+from qaoas.qlt.qaoa import QAOA
 
 
 def get_maxcut() -> jm.Problem:
@@ -33,7 +34,6 @@ if __name__ == "__main__":
     interpreter = jm.Interpreter(data)
     instance = interpreter.eval_problem(get_maxcut())
     hubo, constant = instance.to_hubo()
-
     ising = HigherIsingModel.from_hubo(hubo=hubo, constant=constant)
 
     p = 5
@@ -50,14 +50,11 @@ if __name__ == "__main__":
         betas = tuple(param_values[: num_params // 2])
         gammas = tuple(param_values[num_params // 2 :])
         qaoa = QAOA(ising=ising_tuple, betas=betas, gammas=gammas, p=p)
-        cbloq = qaoa.as_composite_bloq()
-        in_quregs = get_named_qubits(cbloq.signature.lefts())
-        qaoa_circuit, quregs = cbloq.to_cirq_circuit_and_quregs(**in_quregs)
+        flat_qaoa = qaoa.decompose_bloq().flatten()
+        in_quregs = get_named_qubits(flat_qaoa.signature.lefts())
+        qaoa_circuit, quregs = flat_qaoa.to_cirq_circuit_and_quregs(**in_quregs)
         qubits = np.asarray(quregs["q"], dtype=object).ravel().tolist()
-        circuit = cirq.Circuit(
-            qaoa_circuit,
-        )
-        observables = 0
+        observables = ising.constant
         for indices, coefficient in ising.coefficients.items():
             observable = coefficient
             for index in indices:
@@ -65,7 +62,7 @@ if __name__ == "__main__":
             observables += observable
         sim = cirq.Simulator()
         cost = sim.simulate_expectation_values(
-            program=circuit, observables=observables
+            program=qaoa_circuit, observables=observables
         )[0].real
         cost_history.append(cost)
         return cost
@@ -130,5 +127,9 @@ if __name__ == "__main__":
     print(solution_dict)
 
     solution = instance.evaluate(solution_dict)
-    print(instance.used_decision_variables)
     print(solution.objective)
+    print(solution.state.entries)
+
+    pyscip_solution = OMMXPySCIPOptAdapter.solve(instance)
+    print(pyscip_solution.objective)
+    print(pyscip_solution.state.entries)

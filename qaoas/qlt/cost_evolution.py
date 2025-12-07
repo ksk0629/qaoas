@@ -40,12 +40,16 @@ class CostEvolution(qlt.Bloq):
                 q[indices[0]] = bb.add(Rz(parameter), q=q[indices[0]])
             elif num_qubits > 1:
                 for k in range(num_qubits - 1):
-                    q[k], q[k + 1] = bb.add(CNOT(), ctrl=q[k], target=q[k + 1])
+                    q[indices[k]], q[indices[k + 1]] = bb.add(
+                        CNOT(), ctrl=q[indices[k]], target=q[indices[k + 1]]
+                    )
                 # Apply RZ gate to the last qubit.
                 q[indices[-1]] = bb.add(Rz(parameter), q=q[indices[-1]])
                 # Reverse CNOT chain over the qubits
                 for k in range(num_qubits - 2, -1, -1):
-                    q[k], q[k + 1] = bb.add(CNOT(), ctrl=q[k], target=q[k + 1])
+                    q[indices[k]], q[indices[k + 1]] = bb.add(
+                        CNOT(), ctrl=q[indices[k]], target=q[indices[k + 1]]
+                    )
             else:
                 raise ValueError(
                     f"The number of qubits must be positive, but {num_qubits}"
